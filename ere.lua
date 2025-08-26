@@ -7,7 +7,7 @@ local Remote = game:GetService("ReplicatedStorage").RemoteEvents.RequestTakeDiam
 local Interface = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Interface")
 local DiamondCount = Interface:WaitForChild("DiamondCount"):WaitForChild("Count")
 
-local a, b, c, d, e, f, g, notificationLabel
+local a, b, c, d, e, totalDiamondsLabel, roundDiamondsLabel, infoLabel
 local chest, proxPrompt
 local startTime
 
@@ -57,16 +57,14 @@ task.spawn(function()
     end
 end)
 
--- Create the big centered GUI
 a = Instance.new("ScreenGui")
 a.Name = "DiamondFarmUI"
 a.ResetOnSpawn = false
 a.Parent = game.CoreGui
 
--- Main frame
 b = Instance.new("Frame", a)
-b.Size = UDim2.new(0, 400, 0, 220)
-b.Position = UDim2.new(0.5, -200, 0.5, -110)
+b.Size = UDim2.new(0, 400, 0, 260)
+b.Position = UDim2.new(0.5, -200, 0.5, -130)
 b.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 b.BorderSizePixel = 0
 b.Active = true
@@ -79,7 +77,6 @@ d = Instance.new("UIStroke", b)
 d.Thickness = 2
 rainbowStroke(d)
 
--- Title
 e = Instance.new("TextLabel", b)
 e.Size = UDim2.new(1, 0, 0, 50)
 e.Position = UDim2.new(0, 0, 0, 0)
@@ -90,46 +87,57 @@ e.Font = Enum.Font.GothamBold
 e.TextSize = 28
 e.TextStrokeTransparency = 0.6
 
--- Diamond count
-f = Instance.new("TextLabel", b)
-f.Size = UDim2.new(1, -40, 0, 60)
-f.Position = UDim2.new(0, 20, 0, 60)
-f.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-f.TextColor3 = Color3.new(1, 1, 1)
-f.Font = Enum.Font.GothamBold
-f.TextSize = 24
-f.BorderSizePixel = 0
+totalDiamondsLabel = Instance.new("TextLabel", b)
+totalDiamondsLabel.Size = UDim2.new(1, -40, 0, 40)
+totalDiamondsLabel.Position = UDim2.new(0, 20, 0, 60)
+totalDiamondsLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+totalDiamondsLabel.TextColor3 = Color3.new(1, 1, 1)
+totalDiamondsLabel.Font = Enum.Font.GothamBold
+totalDiamondsLabel.TextSize = 22
+totalDiamondsLabel.BorderSizePixel = 0
+totalDiamondsLabel.Text = "Total Diamonds: ..."
+local totalCorner = Instance.new("UICorner", totalDiamondsLabel)
+totalCorner.CornerRadius = UDim.new(0, 10)
 
-g = Instance.new("UICorner", f)
-g.CornerRadius = UDim.new(0, 12)
+roundDiamondsLabel = Instance.new("TextLabel", b)
+roundDiamondsLabel.Size = UDim2.new(1, -40, 0, 36)
+roundDiamondsLabel.Position = UDim2.new(0, 20, 0, 104)
+roundDiamondsLabel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+roundDiamondsLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+roundDiamondsLabel.Font = Enum.Font.GothamBold
+roundDiamondsLabel.TextSize = 20
+roundDiamondsLabel.BorderSizePixel = 0
+roundDiamondsLabel.Text = "Diamonds gained this round: ..."
+local roundCorner = Instance.new("UICorner", roundDiamondsLabel)
+roundCorner.CornerRadius = UDim.new(0, 10)
 
--- Info / notification label (always visible, updates with status)
-notificationLabel = Instance.new("TextLabel", b)
-notificationLabel.Size = UDim2.new(1, -40, 0, 50)
-notificationLabel.Position = UDim2.new(0, 20, 0, 130)
-notificationLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-notificationLabel.BackgroundTransparency = 0.3
-notificationLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
-notificationLabel.Font = Enum.Font.GothamBold
-notificationLabel.TextSize = 20
-notificationLabel.Text = "Waiting for diamond chest..."
-notificationLabel.BorderSizePixel = 0
-local notificationCorner = Instance.new("UICorner", notificationLabel)
-notificationCorner.CornerRadius = UDim.new(0, 12)
+infoLabel = Instance.new("TextLabel", b)
+infoLabel.Size = UDim2.new(1, -40, 0, 50)
+infoLabel.Position = UDim2.new(0, 20, 0, 150)
+infoLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+infoLabel.BackgroundTransparency = 0.3
+infoLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+infoLabel.Font = Enum.Font.GothamBold
+infoLabel.TextSize = 20
+infoLabel.Text = "Waiting for diamond chest..."
+infoLabel.BorderSizePixel = 0
+local infoCorner = Instance.new("UICorner", infoLabel)
+infoCorner.CornerRadius = UDim.new(0, 12)
 
--- Live diamond count updater
+local prevDiamondCount = tonumber(DiamondCount.Text) or 0
+
 task.spawn(function()
     while task.wait(0.2) do
-        f.Text = "Diamonds: " .. DiamondCount.Text
+        local currentDiamondCount = tonumber(DiamondCount.Text) or 0
+        totalDiamondsLabel.Text = "Total Diamonds: " .. currentDiamondCount
+        roundDiamondsLabel.Text = "Diamonds gained this round: " .. (currentDiamondCount - prevDiamondCount)
     end
 end)
 
--- Utility for updating info label
 local function updateInfo(text)
-    notificationLabel.Text = text
+    infoLabel.Text = text
 end
 
--- Wait for character spawn
 repeat task.wait() until LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
 chest = workspace.Items:FindFirstChild("Stronghold Diamond Chest")
@@ -171,6 +179,7 @@ updateInfo("Searching for diamonds in workspace...")
 repeat task.wait(0.1) until workspace:FindFirstChild("Diamond", true)
 
 local diamondsFound = 0
+prevDiamondCount = tonumber(DiamondCount.Text) or 0
 for _, v in pairs(workspace:GetDescendants()) do
     if v.ClassName == "Model" and v.Name == "Diamond" then
         Remote:FireServer(v)
