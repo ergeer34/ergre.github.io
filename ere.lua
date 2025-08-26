@@ -81,7 +81,7 @@ e = Instance.new("TextLabel", b)
 e.Size = UDim2.new(1, 0, 0, 50)
 e.Position = UDim2.new(0, 0, 0, 0)
 e.BackgroundTransparency = 1
-e.Text = "Farm Diamond | CÁo Mod"
+e.Text = "Farm Diamonds | ringta"
 e.TextColor3 = Color3.fromRGB(255, 255, 255)
 e.Font = Enum.Font.GothamBold
 e.TextSize = 28
@@ -125,12 +125,18 @@ local infoCorner = Instance.new("UICorner", infoLabel)
 infoCorner.CornerRadius = UDim.new(0, 12)
 
 local prevDiamondCount = tonumber(DiamondCount.Text) or 0
+local roundDiamonds = 0
+local roundActive = false
 
 task.spawn(function()
     while task.wait(0.2) do
         local currentDiamondCount = tonumber(DiamondCount.Text) or 0
         totalDiamondsLabel.Text = "Total Diamonds: " .. currentDiamondCount
-        roundDiamondsLabel.Text = "Diamonds gained this round: " .. (currentDiamondCount - prevDiamondCount)
+        if roundActive then
+            roundDiamondsLabel.Text = "Diamonds gained this round: " .. (currentDiamondCount - prevDiamondCount)
+        else
+            roundDiamondsLabel.Text = "Diamonds gained this round: 0"
+        end
     end
 end)
 
@@ -143,6 +149,7 @@ repeat task.wait() until LocalPlayer.Character and LocalPlayer.Character:FindFir
 chest = workspace.Items:FindFirstChild("Stronghold Diamond Chest")
 if not chest then
     updateInfo("Chest not found (my fault), hopping server...")
+    roundActive = false
     hopServer()
     return
 end
@@ -161,25 +168,34 @@ until proxPrompt
 updateInfo("Trying to open stronghold chest...")
 
 startTime = tick()
+local chestOpened = false
 while proxPrompt and proxPrompt.Parent and (tick() - startTime) < 10 do
+    local beforeDiamonds = tonumber(DiamondCount.Text) or 0
     pcall(function()
         fireproximityprompt(proxPrompt)
     end)
     task.wait(0.2)
+    local afterDiamonds = tonumber(DiamondCount.Text) or 0
+    if afterDiamonds > beforeDiamonds then
+        chestOpened = true
+        break
+    end
 end
 
-if proxPrompt and proxPrompt.Parent then
-    updateInfo("Stronghold is starting (auto coming soon), hopping server...")
+if not chestOpened then
+    updateInfo("Couldn't open stronghold chest, hopping server...")
+    roundActive = false
     hopServer()
     return
 end
 
 updateInfo("Searching for diamonds in workspace...")
+roundActive = true
+prevDiamondCount = tonumber(DiamondCount.Text) or 0
 
 repeat task.wait(0.1) until workspace:FindFirstChild("Diamond", true)
 
 local diamondsFound = 0
-prevDiamondCount = tonumber(DiamondCount.Text) or 0
 for _, v in pairs(workspace:GetDescendants()) do
     if v.ClassName == "Model" and v.Name == "Diamond" then
         Remote:FireServer(v)
