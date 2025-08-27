@@ -23,15 +23,10 @@ local function rainbowStroke(stroke)
 end
 
 local visitedServers = {}
-local teleportCooldown = 5
-local lastTeleportTime = 0
 
 local function hopServer()
     local gameId = game.PlaceId
     while true do
-        if tick() - lastTeleportTime < teleportCooldown then
-            task.wait(teleportCooldown - (tick() - lastTeleportTime))
-        end
         local success, body = pcall(function()
             return game:HttpGet(("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100"):format(gameId))
         end)
@@ -41,7 +36,6 @@ local function hopServer()
             for _, server in ipairs(data.data) do
                 if server.playing < server.maxPlayers and server.id ~= game.JobId and not visitedServers[server.id] then
                     visitedServers[server.id] = true
-                    lastTeleportTime = tick()
                     TeleportService:TeleportToPlaceInstance(gameId, server.id, LocalPlayer)
                     hopped = true
                     break
