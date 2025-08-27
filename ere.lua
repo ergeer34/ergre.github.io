@@ -22,6 +22,8 @@ local function rainbowStroke(stroke)
     end)
 end
 
+local visitedServers = {}
+
 local function hopServer()
     local gameId = game.PlaceId
     while true do
@@ -30,15 +32,17 @@ local function hopServer()
         end)
         if success then
             local data = HttpService:JSONDecode(body)
+            local hopped = false
             for _, server in ipairs(data.data) do
-                if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                    while true do
-                        pcall(function()
-                            TeleportService:TeleportToPlaceInstance(gameId, server.id, LocalPlayer)
-                        end)
-                        task.wait(0.1)
-                    end
+                if server.playing < server.maxPlayers and server.id ~= game.JobId and not visitedServers[server.id] then
+                    visitedServers[server.id] = true
+                    TeleportService:TeleportToPlaceInstance(gameId, server.id, LocalPlayer)
+                    hopped = true
+                    break
                 end
+            end
+            if not hopped then
+                visitedServers = {}
             end
         end
         task.wait(0.2)
